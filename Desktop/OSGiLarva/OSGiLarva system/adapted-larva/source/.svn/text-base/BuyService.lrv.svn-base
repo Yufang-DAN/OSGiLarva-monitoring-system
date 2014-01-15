@@ -1,0 +1,63 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 
+%% The following property has 3 levels: it monitors that in the shop
+%% system there are no more than 5 requests
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+IMPORTS{
+%%  import nesting.Client;
+%%  import larvaplug.RootMonitor;
+%%  import larvaplug._callable;
+}
+
+GLOBAL{
+
+  VARIABLES {
+    int requestCnt = 0;
+  }
+
+
+  EVENTS{
+
+    sendRequest() = {*.sendRequest()}
+    buyIt() = {*.buyIt()}
+
+  }
+
+
+  PROPERTY requests{
+
+    STATES {
+
+      BAD{
+        toomany {}
+        badbuy{}
+      }
+
+      NORMAL{
+        ok{}
+      }
+
+      STARTING{
+        start {System.out.println("Started!!!");}
+      }
+   }
+
+   TRANSITIONS{
+
+     ok -> toomany [sendRequest()\requestCnt > 5]
+
+     ok -> ok [sendRequest()\\requestCnt++;]
+
+     ok -> start [buyIt()\requestCnt == 1\requestCnt--;]
+
+     ok -> ok [buyIt()\\requestCnt--;]
+
+     start -> ok [sendRequest()\\requestCnt++;]
+
+     start -> badbuy [buyIt()\\]
+
+   }
+  }
+}

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>fr.citi.amazones</groupId>
+    <artifactId>BuyServices</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>YuFang Projet</name>
+
+    <modules>
+      <module>BuyService1</module>
+      <module>BuyClient</module>
+    </modules>
+
+    <packaging>pom</packaging>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.5</source>
+                    <target>1.5</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.ops4j</groupId>
+                <artifactId>maven-pax-plugin</artifactId>
+                <version>1.5</version>
+		        <configuration>
+	              <provision>
+		          <param>mvn:fr.inria.amazones/logging/0.0.1-SNAPSHOT</param>
+                  <param>mvn:fr.inria.amazones/logos/1.0-SNAPSHOT</param>
+                  <param>mvn:fr.citi.amazones/fr.citi.amazones.fmuse/0.0.1-SNAPSHOT@nostart</param>
+                  <param>mvn:fr.citi.amazones/fr.citi.amazones.fm1/0.0.1-SNAPSHOT@nostart</param>
+                  <!--param>mvn:fr.citi.amazones/fr.citi.amazones.fm2/0.0.1-SNAPSHOT@nostart</param-->
+		          </provision>
+		        </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    <properties>
+      <fr.inria.amazones.logosng.storage.level>WARNING</fr.inria.amazones.logosng.storage.level>
+      <fr.inria.amazones.logosng.interception.level>INFO</fr.inria.amazones.logosng.interception.level>
+      
+      <fr.citi.amazones.fmuse.client.maxruns>1</fr.citi.amazones.fmuse.client.maxruns>
+      
+      <!--fr.citi.amazones.fm1.delay1>300</fr.citi.amazones.fm1.delay1-->
+      <!--fr.citi.amazones.fmuse.client.delay>30000</fr.citi.amazones.fmuse.client.delay-->
+      <!--fr.citi.amazones.fm2.delay2>300</fr.citi.amazones.fm2.delay2-->
+      
+      <logosng.protected>false</logosng.protected>
+      <logosng.protected.consoledebug>true</logosng.protected.consoledebug>
+      <logosng.crypted>false</logosng.crypted>
+      <logosng.compress>true</logosng.compress>
+
+      <logosng.logging.logfilename>logosng-recorded-on</logosng.logging.logfilename>
+      <logosng.logging.logfilesize>500000</logosng.logging.logfilesize>
+      <logosng.logging.maxnumberofsavedfiles>40</logosng.logging.maxnumberofsavedfiles>
+      <logosng.aop.skip-services>org.apache.felix.gogo.shell.Converters,org.apache.felix.service.command.CommandProcessor,org.apache.felix.service.threadio.ThreadIO</logosng.aop.skip-services>
+    </properties>
+
+</project>
+
+

@@ -1,0 +1,81 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 
+%% The following property has 3 levels: it monitors that in the shop
+%% system there are no more than 5 requests
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+IMPORTS{
+}
+
+GLOBAL{
+
+  VARIABLES {
+  }
+
+  EVENTS{
+
+    BuyService.hello1() = {}
+    BuyService.hello2() = {}
+       
+  }
+
+    PROPERTY service{
+        STATES {
+            BAD{
+            }
+        
+            NORMAL{
+                ok{}
+            }
+    
+            STARTING{
+                start {System.out.println("Started!!!");}
+            }
+        }
+
+        TRANSITIONS{
+            start -> ok [BuyService.hello1\\System.out.println("Service interface transition with method1.");]
+
+            ok -> start [BuyService.hello2\\System.out.println("Service interface transition with method2.");]
+        }
+    }
+    
+    FOREACH(Long pid, String si) {
+        VARIABLES {
+        }
+
+        EVENTS{
+            LoadS() = {}
+            BuyService.hello1() = {}
+            BuyService.hello2() = {}
+            UnLoaded() = {}
+
+        }
+        PROPERTY client{
+    
+            STATES {
+        
+                BAD{
+                    noS{}
+                }
+        
+                NORMAL{
+                    ok{}
+                }
+                
+                STARTING{
+                    start {}
+                }
+            }
+        
+            TRANSITIONS{
+                start -> ok [LoadS\\System.out.println("Client id is "+ pid + ". The service interface of this loaded service is: " + si);]
+                ok -> start [UnLoaded\\System.out.println("One service was unloaded. client id is: "+ pid+ ". The service interface of this loaded service is: " + si);]
+                
+                ok -> ok [BuyService.hello1\\System.out.println("client id is: "+ pid+ ". The service interface of this loaded service is: " + si);]
+                ok -> ok [BuyService.hello2\\System.out.println("client id is: "+ pid+ ". The service interface of this loaded service is: " + si);]
+                }
+        }
+    }
+}

@@ -1,0 +1,582 @@
+Index: integration-tests/src/test/java/fr/inria/amazones/logosng/testing/it/IntegrationTest.java
+===================================================================
+--- integration-tests/src/test/java/fr/inria/amazones/logosng/testing/it/IntegrationTest.java	(révision 2286)
++++ integration-tests/src/test/java/fr/inria/amazones/logosng/testing/it/IntegrationTest.java	(copie de travail)
+@@ -32,7 +32,10 @@
+ 
+                 provision(
+                         mavenBundle().groupId("fr.inria.amazones").artifactId("logging").version("0.0.1-SNAPSHOT"),
+-                        mavenBundle().groupId("fr.inria.amazones").artifactId("logos").version("1.0-SNAPSHOT")
++                        mavenBundle().groupId("fr.inria.amazones").artifactId("logos").version("1.0-SNAPSHOT"),
++                        wrappedBundle(
++                                mavenBundle().groupId("com.esotericsoftware").artifactId("kryo").version("1.04")
++                        )
+                 ),
+ 
+                 systemProperty("fr.inria.amazones.logosng.storage.level").value("INFO"),
+Index: logos/src/main/java/fr/inria/amazones/logosng/interception/LoggingProxy.java
+===================================================================
+--- logos/src/main/java/fr/inria/amazones/logosng/interception/LoggingProxy.java	(révision 2285)
++++ logos/src/main/java/fr/inria/amazones/logosng/interception/LoggingProxy.java	(copie de travail)
+@@ -1,5 +1,7 @@
+ package fr.inria.amazones.logosng.interception;
+ 
++import com.esotericsoftware.kryo.Kryo;
++import com.esotericsoftware.kryo.ObjectBuffer;
+ import fr.inria.amazones.logosng.storage.AppendOnlyCompressedCryptedEventStore;
+ import fr.inria.amazones.logosng.logging.LogosSecurityException;
+ import fr.inria.amazones.logosng.logging.ServiceLoggingEvent;
+@@ -36,6 +38,9 @@
+     private final boolean enforceTrustedBundleData;
+     private final Set<String> trustedBundles;
+ 
++    private final Kryo kryo = new Kryo();
++    private final ObjectBuffer objectBuffer = new ObjectBuffer(kryo);
++
+     private ClassAnalyzer classAnalyzer;
+ 
+     public LoggingProxy(BundleContext bc,
+@@ -50,7 +55,10 @@
+                         boolean enforceTrustedBundleData,
+                         Set<String> trustedBundles,
+                         AppendOnlyCompressedCryptedEventStore serviceLogger) {
++
+         internalLogger = fr.inria.amazones.logging.Logger.getLogger(bc, this.getClass());
++        kryo.setRegistrationOptional(true);
++
+         this.classAnalyzer = new ClassAnalyzer(bc);
+         this.proxyClassLoader = proxyClassLoader;
+         this.service = service;
+@@ -167,29 +175,12 @@
+ 
+     private Object cloneThroughSerialization(Serializable object) throws IOException, ClassNotFoundException {
+         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+-        ObjectOutputStream out = new ObjectOutputStream(byteArrayOutputStream);
+-        out.writeObject(object);
+-        out.close();
++        objectBuffer.writeClassAndObject(byteArrayOutputStream, object);
+ 
+         final byte[] serializedObject = byteArrayOutputStream.toByteArray();
+         byteArrayOutputStream.close();
+ 
+-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(serializedObject);
+-        ObjectInputStream in = new ObjectInputStream(byteArrayInputStream) {
+-
+-            @Override
+-            public Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+-                try {
+-                    return proxyClassLoader.loadClass(desc.getName());
+-                } catch (ClassNotFoundException e) {
+-                    return super.resolveClass(desc);
+-                }
+-            }
+-        };
+-        Object cloned = in.readObject();
+-        in.close();
+-
+-        return cloned;
++        return objectBuffer.readClassAndObject(serializedObject);
+     }
+ 
+     private List<Object> interceptCall(Method method, Object[] args) {
+Index: logos/src/main/java/fr/inria/amazones/logosng/storage/AppendOnlyCompressedCryptedEventStore.java
+===================================================================
+--- logos/src/main/java/fr/inria/amazones/logosng/storage/AppendOnlyCompressedCryptedEventStore.java	(révision 2285)
++++ logos/src/main/java/fr/inria/amazones/logosng/storage/AppendOnlyCompressedCryptedEventStore.java	(copie de travail)
+@@ -1,5 +1,7 @@
+ package fr.inria.amazones.logosng.storage;
+ 
++import com.esotericsoftware.kryo.Kryo;
++import com.esotericsoftware.kryo.ObjectBuffer;
+ import fr.inria.amazones.logosng.logging.ServiceLoggingEvent;
+ import org.osgi.framework.BundleContext;
+ 
+@@ -29,7 +31,6 @@
+ 
+     private long byteLimitUntilRotation = 0;
+     private File currentFile;
+-    private ObjectOutputStream oos;
+     private int numFile = 1;
+     private int maxNumberOfFiles;
+     private String prefixFileName;
+@@ -39,6 +40,8 @@
+     private boolean compress = false;
+     private int debugCpt = 1;
+     private final Logger internalLogger;
++    private Kryo kryo;
++    private ObjectBuffer objectBuffer;
+ 
+     public AppendOnlyCompressedCryptedEventStore(BundleContext bc) {
+         this.internalLogger = fr.inria.amazones.logging.Logger.getLogger(bc, this.getClass());
+@@ -69,7 +72,10 @@
+                     this.debug = true;
+                 }
+             }
+-            this.oos = new ObjectOutputStream(los);
++            Kryo kryo = new Kryo();
++            kryo.register(ServiceLoggingEvent.class);
++            kryo.setRegistrationOptional(true);
++            objectBuffer = new ObjectBuffer(kryo);
+ 
+         } catch (Exception e) {
+             e.printStackTrace();
+@@ -83,8 +89,8 @@
+             debugCpt++;
+         }
+         try {
+-            oos.writeObject(e);
+-            oos.flush();
++            objectBuffer.writeClassAndObject(los, e);
++            los.flush();
+             if (los.getCurrentLength() >= byteLimitUntilRotation) {
+                 performRotation();
+             }
+@@ -97,7 +103,6 @@
+     private void reopenStream() throws Exception {
+         fos = new FileOutputStream(currentFile);
+         los.setOutputStream(fos);
+-        oos.reset();
+     }
+ 
+     private void performRotation() throws IOException {
+Index: logos/pom.xml
+===================================================================
+--- logos/pom.xml	(révision 2286)
++++ logos/pom.xml	(copie de travail)
+@@ -23,6 +23,11 @@
+             <artifactId>logging</artifactId>
+             <version>0.0.1-SNAPSHOT</version>
+         </dependency>
++        <dependency> <!-- Requires a manual install.. -->
++            <groupId>com.esotericsoftware</groupId>
++            <artifactId>kryo</artifactId>
++            <version>1.04</version>
++        </dependency>
+     </dependencies>
+ 
+     <build>
+@@ -43,7 +48,8 @@
+                             org.osgi.util.tracker,
+                             fr.inria.amazones.logging,
+                             javax.crypto,
+-                            javax.crypto.spec
++                            javax.crypto.spec,
++                            com.esotericsoftware.kryo
+                         </Import-Package>
+                         <Export-Package>
+                             fr.inria.amazones.logosng.logging
+Index: kryo-serialization.patch
+===================================================================
+--- kryo-serialization.patch	(révision 2285)
++++ kryo-serialization.patch	(copie de travail)
+@@ -1,22 +1,87 @@
+-Index: logos/src/main/java/fr/inria/amazones/logosng/storage/LogosOutputStream.java
++Index: integration-tests/src/test/java/fr/inria/amazones/logosng/testing/it/IntegrationTest.java
+ ===================================================================
+---- logos/src/main/java/fr/inria/amazones/logosng/storage/LogosOutputStream.java	(révision 2243)
+-+++ logos/src/main/java/fr/inria/amazones/logosng/storage/LogosOutputStream.java	(copie de travail)
+-@@ -1,9 +1,10 @@
+- package fr.inria.amazones.logosng.storage;
++--- integration-tests/src/test/java/fr/inria/amazones/logosng/testing/it/IntegrationTest.java	(révision 2286)
+++++ integration-tests/src/test/java/fr/inria/amazones/logosng/testing/it/IntegrationTest.java	(copie de travail)
++@@ -32,7 +32,10 @@
+  
+-+import java.io.BufferedOutputStream;
+- import java.io.FilterOutputStream;
+- import java.io.OutputStream;
++                 provision(
++                         mavenBundle().groupId("fr.inria.amazones").artifactId("logging").version("0.0.1-SNAPSHOT"),
++-                        mavenBundle().groupId("fr.inria.amazones").artifactId("logos").version("1.0-SNAPSHOT")
+++                        mavenBundle().groupId("fr.inria.amazones").artifactId("logos").version("1.0-SNAPSHOT"),
+++                        wrappedBundle(
+++                                mavenBundle().groupId("com.esotericsoftware").artifactId("kryo").version("1.04")
+++                        )
++                 ),
+  
+--public class LogosOutputStream extends FilterOutputStream {
+-+public class LogosOutputStream extends BufferedOutputStream {
++                 systemProperty("fr.inria.amazones.logosng.storage.level").value("INFO"),
++Index: logos/src/main/java/fr/inria/amazones/logosng/interception/LoggingProxy.java
++===================================================================
++--- logos/src/main/java/fr/inria/amazones/logosng/interception/LoggingProxy.java	(révision 2285)
+++++ logos/src/main/java/fr/inria/amazones/logosng/interception/LoggingProxy.java	(copie de travail)
++@@ -1,5 +1,7 @@
++ package fr.inria.amazones.logosng.interception;
+  
+-     public LogosOutputStream(OutputStream o) throws Exception {
+-         super(o);
+++import com.esotericsoftware.kryo.Kryo;
+++import com.esotericsoftware.kryo.ObjectBuffer;
++ import fr.inria.amazones.logosng.storage.AppendOnlyCompressedCryptedEventStore;
++ import fr.inria.amazones.logosng.logging.LogosSecurityException;
++ import fr.inria.amazones.logosng.logging.ServiceLoggingEvent;
++@@ -36,6 +38,9 @@
++     private final boolean enforceTrustedBundleData;
++     private final Set<String> trustedBundles;
++ 
+++    private final Kryo kryo = new Kryo();
+++    private final ObjectBuffer objectBuffer = new ObjectBuffer(kryo);
+++
++     private ClassAnalyzer classAnalyzer;
++ 
++     public LoggingProxy(BundleContext bc,
++@@ -50,7 +55,10 @@
++                         boolean enforceTrustedBundleData,
++                         Set<String> trustedBundles,
++                         AppendOnlyCompressedCryptedEventStore serviceLogger) {
+++
++         internalLogger = fr.inria.amazones.logging.Logger.getLogger(bc, this.getClass());
+++        kryo.setRegistrationOptional(true);
+++
++         this.classAnalyzer = new ClassAnalyzer(bc);
++         this.proxyClassLoader = proxyClassLoader;
++         this.service = service;
++@@ -167,29 +175,12 @@
++ 
++     private Object cloneThroughSerialization(Serializable object) throws IOException, ClassNotFoundException {
++         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
++-        ObjectOutputStream out = new ObjectOutputStream(byteArrayOutputStream);
++-        out.writeObject(object);
++-        out.close();
+++        objectBuffer.writeClassAndObject(byteArrayOutputStream, object);
++ 
++         final byte[] serializedObject = byteArrayOutputStream.toByteArray();
++         byteArrayOutputStream.close();
++ 
++-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(serializedObject);
++-        ObjectInputStream in = new ObjectInputStream(byteArrayInputStream) {
++-
++-            @Override
++-            public Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
++-                try {
++-                    return proxyClassLoader.loadClass(desc.getName());
++-                } catch (ClassNotFoundException e) {
++-                    return super.resolveClass(desc);
++-                }
++-            }
++-        };
++-        Object cloned = in.readObject();
++-        in.close();
++-
++-        return cloned;
+++        return objectBuffer.readClassAndObject(serializedObject);
++     }
++ 
++     private List<Object> interceptCall(Method method, Object[] args) {
+ Index: logos/src/main/java/fr/inria/amazones/logosng/storage/AppendOnlyCompressedCryptedEventStore.java
+ ===================================================================
+---- logos/src/main/java/fr/inria/amazones/logosng/storage/AppendOnlyCompressedCryptedEventStore.java	(révision 2243)
++--- logos/src/main/java/fr/inria/amazones/logosng/storage/AppendOnlyCompressedCryptedEventStore.java	(révision 2285)
+ +++ logos/src/main/java/fr/inria/amazones/logosng/storage/AppendOnlyCompressedCryptedEventStore.java	(copie de travail)
+ @@ -1,5 +1,7 @@
+  package fr.inria.amazones.logosng.storage;
+@@ -26,28 +91,36 @@
+  import fr.inria.amazones.logosng.logging.ServiceLoggingEvent;
+  import org.osgi.framework.BundleContext;
+  
+-@@ -69,22 +71,28 @@
++@@ -29,7 +31,6 @@
++ 
++     private long byteLimitUntilRotation = 0;
++     private File currentFile;
++-    private ObjectOutputStream oos;
++     private int numFile = 1;
++     private int maxNumberOfFiles;
++     private String prefixFileName;
++@@ -39,6 +40,8 @@
++     private boolean compress = false;
++     private int debugCpt = 1;
++     private final Logger internalLogger;
+++    private Kryo kryo;
+++    private ObjectBuffer objectBuffer;
++ 
++     public AppendOnlyCompressedCryptedEventStore(BundleContext bc) {
++         this.internalLogger = fr.inria.amazones.logging.Logger.getLogger(bc, this.getClass());
++@@ -69,7 +72,10 @@
+                      this.debug = true;
+                  }
+              }
+ -            this.oos = new ObjectOutputStream(los);
+- 
+ +            Kryo kryo = new Kryo();
+ +            kryo.register(ServiceLoggingEvent.class);
+ +            kryo.setRegistrationOptional(true);
+ +            objectBuffer = new ObjectBuffer(kryo);
+-+
++ 
+          } catch (Exception e) {
+              e.printStackTrace();
+-             System.exit(0);
+-         }
+-     }
+- 
+-+    private ObjectBuffer objectBuffer;
+-+
+-     public synchronized void log(ServiceLoggingEvent e) {
+-         if (debug) {
+-             internalLogger.info(debugCpt + "\n" + e);
++@@ -83,8 +89,8 @@
+              debugCpt++;
+          }
+          try {
+@@ -55,10 +128,10 @@
+ -            oos.flush();
+ +            objectBuffer.writeClassAndObject(los, e);
+ +            los.flush();
+-             if (currentFile.length() >= byteLimitUntilRotation) {
++             if (los.getCurrentLength() >= byteLimitUntilRotation) {
+                  performRotation();
+              }
+-@@ -97,7 +105,6 @@
++@@ -97,7 +103,6 @@
+      private void reopenStream() throws Exception {
+          fos = new FileOutputStream(currentFile);
+          los.setOutputStream(fos);
+@@ -68,7 +141,7 @@
+      private void performRotation() throws IOException {
+ Index: logos/pom.xml
+ ===================================================================
+---- logos/pom.xml	(révision 2243)
++--- logos/pom.xml	(révision 2286)
+ +++ logos/pom.xml	(copie de travail)
+ @@ -23,6 +23,11 @@
+              <artifactId>logging</artifactId>
+@@ -82,30 +155,13 @@
+      </dependencies>
+  
+      <build>
+-@@ -41,9 +46,10 @@
+-                             org.osgi.framework,
+-                             org.osgi.framework.hooks.service,
++@@ -43,7 +48,8 @@
+                              org.osgi.util.tracker,
+--			    fr.inria.amazones.logging,
+-+			                fr.inria.amazones.logging,
+-                             javax.crypto, 
++                             fr.inria.amazones.logging,
++                             javax.crypto,
+ -                            javax.crypto.spec
+ +                            javax.crypto.spec,
+ +                            com.esotericsoftware.kryo
+                          </Import-Package>
+                          <Export-Package>
+                              fr.inria.amazones.logosng.logging
+-Index: test-1/pom.xml
+-===================================================================
+---- test-1/pom.xml	(révision 2243)
+-+++ test-1/pom.xml	(copie de travail)
+-@@ -40,7 +40,8 @@
+- 		  <provision>
+- 		    <!-- DEBUT LOGOS-NG -->
+- 		    <param>mvn:fr.inria.amazones/logging/0.0.1-SNAPSHOT</param>
+--                    <param>mvn:fr.inria.amazones/logos/1.0-SNAPSHOT</param>
+-+            <param>mvn:fr.inria.amazones/logos/1.0-SNAPSHOT</param>
+-+            <param>mvn:com.esotericsoftware/kryo/1.04</param>
+- 		    <!-- FIN LOGOS-NG -->
+- 
+- 		  </provision>
+Index: test-1/pom.xml
+===================================================================
+--- test-1/pom.xml	(révision 2285)
++++ test-1/pom.xml	(copie de travail)
+@@ -10,17 +10,17 @@
+     <name>Logos Test 1</name>
+ 
+     <modules>
+-      <module>HelloService</module>
+-      <module>HelloClient</module>
+-	  <!-- ICI : nos propres modules-->
++        <module>HelloService</module>
++        <module>HelloClient</module>
++        <!-- ICI : nos propres modules-->
+     </modules>
+ 
+     <dependencies>
+-      <dependency>
+-        <groupId>fr.inria.amazones</groupId>
+-        <artifactId>logos</artifactId>
+-        <version>1.0-SNAPSHOT</version>
+-      </dependency>
++        <dependency>
++            <groupId>fr.inria.amazones</groupId>
++            <artifactId>logos</artifactId>
++            <version>1.0-SNAPSHOT</version>
++        </dependency>
+     </dependencies>
+ 
+     <packaging>pom</packaging>
+@@ -41,43 +41,44 @@
+                 <groupId>org.ops4j</groupId>
+                 <artifactId>maven-pax-plugin</artifactId>
+                 <version>1.4</version>
+-				<!-- Rajoute le "provisioning automatique" de Felix-->
+-				<!-- avantage : telecharge tout le necessaire autour
+-				  de felix (Felix, les bundles de Felix, les Bundle
+-				  dont dépend ton projet, et ceux de notre projet )-->
++                <!-- Rajoute le "provisioning automatique" de Felix-->
++                <!-- avantage : telecharge tout le necessaire autour
++                      de felix (Felix, les bundles de Felix, les Bundle
++                      dont dépend ton projet, et ceux de notre projet )-->
+ 
+-		<configuration>
+-		  <provision>
+-		    <!-- DEBUT LOGOS-NG -->
+-		    <param>mvn:fr.inria.amazones/logging/0.0.1-SNAPSHOT</param>
+-                    <!-- param>mvn:fr.inria.amazones/logos/1.0-SNAPSHOT@nostart</param -->
+-                    <param>mvn:fr.inria.amazones/logos/1.0-SNAPSHOT</param>
+-		    <!-- FIN LOGOS-NG -->
++                <configuration>
++                    <provision>
++                        <!-- DEBUT LOGOS-NG -->
++                        <param>mvn:fr.inria.amazones/logging/0.0.1-SNAPSHOT</param>
++                        <!-- param>mvn:fr.inria.amazones/logos/1.0-SNAPSHOT@nostart</param -->
++                        <param>mvn:fr.inria.amazones/logos/1.0-SNAPSHOT</param>
++                        <param>mvn:com.esotericsoftware/kryo/1.04</param>
++                        <!-- FIN LOGOS-NG -->
+ 
+-		  </provision>
+-		  <args>jvm-args</args>
+-		</configuration>
++                    </provision>
++                    <args>jvm-args</args>
++                </configuration>
+             </plugin>
+         </plugins>
+     </build>
+     <properties>
+-      <fr.inria.amazones.logosng.storage.level>WARNING</fr.inria.amazones.logosng.storage.level>
+-      <fr.inria.amazones.logosng.interception.level>INFO</fr.inria.amazones.logosng.interception.level>
++        <fr.inria.amazones.logosng.storage.level>WARNING</fr.inria.amazones.logosng.storage.level>
++        <fr.inria.amazones.logosng.interception.level>INFO</fr.inria.amazones.logosng.interception.level>
+ 
+-      <fr.inria.amazones.logos.test1.service.delay>0</fr.inria.amazones.logos.test1.service.delay>
+-      <fr.inria.amazones.logos.test1.client.delay>0</fr.inria.amazones.logos.test1.client.delay>
+-      <fr.inria.amazones.logos.test1.client.maxruns>10000</fr.inria.amazones.logos.test1.client.maxruns>
++        <fr.inria.amazones.logos.test1.service.delay>0</fr.inria.amazones.logos.test1.service.delay>
++        <fr.inria.amazones.logos.test1.client.delay>0</fr.inria.amazones.logos.test1.client.delay>
++        <fr.inria.amazones.logos.test1.client.maxruns>10000</fr.inria.amazones.logos.test1.client.maxruns>
+ 
+-	  <!-- Parametrage de LOGOS -->
+-      <logosng.protected>false</logosng.protected>
+-      <logosng.protected.consoledebug>true</logosng.protected.consoledebug>
+-      <logosng.crypted>false</logosng.crypted>
+-      <logosng.compress>true</logosng.compress>
++        <!-- Parametrage de LOGOS -->
++        <logosng.protected>false</logosng.protected>
++        <logosng.protected.consoledebug>true</logosng.protected.consoledebug>
++        <logosng.crypted>false</logosng.crypted>
++        <logosng.compress>true</logosng.compress>
+ 
+-      <logosng.logging.logfilename>logosng-recorded-on</logosng.logging.logfilename>
+-      <logosng.logging.logfilesize>5000000</logosng.logging.logfilesize>
+-      <logosng.logging.maxnumberofsavedfiles>40</logosng.logging.maxnumberofsavedfiles>
+-	  <!-- Fin parametrage de LOGOS -->
++        <logosng.logging.logfilename>logosng-recorded-on</logosng.logging.logfilename>
++        <logosng.logging.logfilesize>5000000</logosng.logging.logfilesize>
++        <logosng.logging.maxnumberofsavedfiles>40</logosng.logging.maxnumberofsavedfiles>
++        <!-- Fin parametrage de LOGOS -->
+     </properties>
+ 
+ </project>
+Index: test-2/pom.xml
+===================================================================
+--- test-2/pom.xml	(révision 2285)
++++ test-2/pom.xml	(copie de travail)
+@@ -10,17 +10,17 @@
+     <name>Logos Test 2</name>
+ 
+     <modules>
+-      <module>HelloService</module>
+-      <module>HelloClient</module>
+-	  <!-- ICI : nos propres modules-->
++        <module>HelloService</module>
++        <module>HelloClient</module>
++        <!-- ICI : nos propres modules-->
+     </modules>
+ 
+     <dependencies>
+-      <dependency>
+-        <groupId>fr.inria.amazones</groupId>
+-        <artifactId>logos</artifactId>
+-        <version>1.0-SNAPSHOT</version>
+-      </dependency>
++        <dependency>
++            <groupId>fr.inria.amazones</groupId>
++            <artifactId>logos</artifactId>
++            <version>1.0-SNAPSHOT</version>
++        </dependency>
+     </dependencies>
+ 
+     <packaging>pom</packaging>
+@@ -41,42 +41,43 @@
+                 <groupId>org.ops4j</groupId>
+                 <artifactId>maven-pax-plugin</artifactId>
+                 <version>1.4</version>
+-				<!-- Rajoute le "provisioning automatique" de Felix-->
+-				<!-- avantage : telecharge tout le necessaire autour
+-				  de felix (Felix, les bundles de Felix, les Bundle
+-				  dont dépend ton projet, et ceux de notre projet )-->
++                <!-- Rajoute le "provisioning automatique" de Felix-->
++                <!-- avantage : telecharge tout le necessaire autour
++                      de felix (Felix, les bundles de Felix, les Bundle
++                      dont dépend ton projet, et ceux de notre projet )-->
+ 
+-		<configuration>
+-		  <provision>
+-		    <!-- DEBUT LOGOS-NG -->
+-		    <param>mvn:fr.inria.amazones/logging/0.0.1-SNAPSHOT</param>
+-                    <!-- param>mvn:fr.inria.amazones/logos/1.0-SNAPSHOT@nostart</param -->
+-                    <param>mvn:fr.inria.amazones/logos/1.0-SNAPSHOT</param>
+-		    <!-- FIN LOGOS-NG -->
++                <configuration>
++                    <provision>
++                        <!-- DEBUT LOGOS-NG -->
++                        <param>mvn:fr.inria.amazones/logging/0.0.1-SNAPSHOT</param>
++                        <!-- param>mvn:fr.inria.amazones/logos/1.0-SNAPSHOT@nostart</param -->
++                        <param>mvn:fr.inria.amazones/logos/1.0-SNAPSHOT</param>
++                        <param>mvn:com.esotericsoftware/kryo/1.04</param>
++                        <!-- FIN LOGOS-NG -->
+ 
+-		  </provision>
+-		  <args>jvm-args</args>
+-		</configuration>
++                    </provision>
++                    <args>jvm-args</args>
++                </configuration>
+             </plugin>
+         </plugins>
+     </build>
+     <properties>
+-      <fr.inria.amazones.logosng.storage.level>WARNING</fr.inria.amazones.logosng.storage.level>
+-      <fr.inria.amazones.logos.test2.client.arraysize>1000</fr.inria.amazones.logos.test2.client.arraysize>
+-      <fr.inria.amazones.logos.test2.service.delay>0</fr.inria.amazones.logos.test2.service.delay>
+-      <fr.inria.amazones.logos.test2.client.delay>0</fr.inria.amazones.logos.test2.client.delay>
+-      <fr.inria.amazones.logos.test2.client.maxruns>10000</fr.inria.amazones.logos.test2.client.maxruns>
++        <fr.inria.amazones.logosng.storage.level>WARNING</fr.inria.amazones.logosng.storage.level>
++        <fr.inria.amazones.logos.test2.client.arraysize>1000</fr.inria.amazones.logos.test2.client.arraysize>
++        <fr.inria.amazones.logos.test2.service.delay>0</fr.inria.amazones.logos.test2.service.delay>
++        <fr.inria.amazones.logos.test2.client.delay>0</fr.inria.amazones.logos.test2.client.delay>
++        <fr.inria.amazones.logos.test2.client.maxruns>10000</fr.inria.amazones.logos.test2.client.maxruns>
+ 
+-	  <!-- Parametrage de LOGOS -->
+-      <logosng.protected>false</logosng.protected>
+-      <logosng.protected.consoledebug>true</logosng.protected.consoledebug>
+-      <logosng.crypted>false</logosng.crypted>
+-      <logosng.compress>true</logosng.compress>
++        <!-- Parametrage de LOGOS -->
++        <logosng.protected>false</logosng.protected>
++        <logosng.protected.consoledebug>true</logosng.protected.consoledebug>
++        <logosng.crypted>false</logosng.crypted>
++        <logosng.compress>true</logosng.compress>
+ 
+-      <logosng.logging.logfilename>logosng-recorded-on</logosng.logging.logfilename>
+-      <logosng.logging.logfilesize>5000000</logosng.logging.logfilesize>
+-      <logosng.logging.maxnumberofsavedfiles>4000</logosng.logging.maxnumberofsavedfiles>
+-	  <!-- Fin parametrage de LOGOS -->
++        <logosng.logging.logfilename>logosng-recorded-on</logosng.logging.logfilename>
++        <logosng.logging.logfilesize>5000000</logosng.logging.logfilesize>
++        <logosng.logging.maxnumberofsavedfiles>4000</logosng.logging.maxnumberofsavedfiles>
++        <!-- Fin parametrage de LOGOS -->
+     </properties>
+ 
+ </project>

@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/IARIAJournal2013/!svn/ver/204/Tool/sfr/Example-1I2S1C-WithOSGiLarva
+END
+larvaForEachclock.sh
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/IARIAJournal2013/!svn/ver/165/Tool/sfr/Example-1I2S1C-WithOSGiLarva/larvaForEachclock.sh
+END
+BuyServiceForEachclock.lrv
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/IARIAJournal2013/!svn/ver/161/Tool/sfr/Example-1I2S1C-WithOSGiLarva/BuyServiceForEachclock.lrv
+END
+larvaForEach.sh
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/IARIAJournal2013/!svn/ver/165/Tool/sfr/Example-1I2S1C-WithOSGiLarva/larvaForEach.sh
+END
+BuyServiceForEach.lrv
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/IARIAJournal2013/!svn/ver/161/Tool/sfr/Example-1I2S1C-WithOSGiLarva/BuyServiceForEach.lrv
+END
+pom.xml
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/IARIAJournal2013/!svn/ver/204/Tool/sfr/Example-1I2S1C-WithOSGiLarva/pom.xml
+END
+clean.sh
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/IARIAJournal2013/!svn/ver/161/Tool/sfr/Example-1I2S1C-WithOSGiLarva/clean.sh
+END

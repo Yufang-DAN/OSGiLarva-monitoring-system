@@ -1,0 +1,93 @@
+package fr.citi.amazones.fmuse;
+
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+
+import fr.citi.amazones.fm1.BuyService;
+
+/*import java.util.Dictionary;;
+import java.util.Hashtable;;
+import org.apache.felix.service.command.Descriptor;
+import org.apache.felix.service.command.CommandProcessor;;*/
+
+import static java.lang.Integer.valueOf;
+
+public class BuyClient implements BundleActivator{//, BuyClientCommands {
+  private BuyService bs;
+  private BuyService bs1;
+  int n=0;
+  private int maxruns;
+  
+  private static final String MAX_RUNS="fr.citi.amazones.fmuse.client.maxruns";
+
+  public void start(BundleContext context) throws Exception{  
+	/*Dictionary<String, Object> shell = new Hashtable<String, Object>();
+    shell.put(CommandProcessor.COMMAND_SCOPE, BuyClientCommands.SCOPE);
+    shell.put(CommandProcessor.COMMAND_FUNCTION, BuyClientCommands.NAMES);
+    context.registerService(BuyClientCommands.class.getName(), this, shell);
+    this.context=context;*/
+    
+    this.maxruns=valueOf(context.getProperty(MAX_RUNS));
+    long start = System.currentTimeMillis();
+    
+    while(n<maxruns){
+		ServiceReference sr=context.getServiceReference(BuyService.class.getName());
+		this.bs=(BuyService)context.getService(sr);
+		System.out.println("Client gets S1!");
+		
+		this.bs.hello1();
+		System.out.println("Client invoks m1 from S1!");
+		
+		context.getBundle(9).stop();
+		System.out.println("S1 Unregistered!");
+		
+		context.getBundle(10).start();
+		System.out.println("S2 Registered!");
+		
+		ServiceReference sr1=context.getServiceReference(BuyService.class.getName());
+		this.bs1=(BuyService)context.getService(sr1);
+		System.out.println("Client gets S2!");
+		
+		this.bs.hello2();
+		System.out.println("Client invoks m2 from S2!");
+		
+		context.getBundle(10).stop();
+		System.out.println("S2 Unregistered!");
+		
+		context.getBundle(9).start();
+		System.out.println("S1 Registered!");
+		
+		n++;
+		System.out.println("n= "+n);
+	}
+	long duration=System.currentTimeMillis()-start;
+	
+	System.out.println("duration= "+duration);
+	System.out.println("maxruns= "+maxruns);
+	
+	System.err.println("duration= "+duration);
+	System.err.println("maxruns= "+maxruns);
+	
+	System.out.println("Sortie!");
+	context.getBundle(0).stop();
+
+}
+
+  public void stop(BundleContext context){
+	   }
+  
+  /*public void loadS(){
+	  ServiceReference sr=this.context.getServiceReference(BuyService.class.getName());
+      this.bs=(BuyService)this.context.getService(sr);
+	  }
+
+  public void requestS1M(){
+    this.bs.hello1();
+  }
+  
+  public void requestS2M(){
+    this.bs.hello2();
+  }*/
+}
+

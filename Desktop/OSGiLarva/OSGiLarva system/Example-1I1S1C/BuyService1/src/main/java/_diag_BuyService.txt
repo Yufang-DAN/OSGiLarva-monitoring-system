@@ -1,0 +1,11 @@
+digraph _logic_BuyService {
+rankdir=LR;
+node [shape = circle]; ok1 start;
+node [shape = octagon]; bad;
+node [shape = point]; _s_s;
+_s_s -> start;
+start -> ok1 [ label = "(1) BuyService.hello1\\i == 0 \\i ++ ; System.out.println ( \" BuyService.hello1! \" ) ; "];
+ok1 -> ok1 [ label = "(1) BuyService.hello2\\i < 3 \\i ++ ; System.out.println ( \" BuyService.hello1! i=  \" + i ) ; "];
+ok1 -> ok1 [ label = "(2) BuyService.hello1\\i < 3 \\i ++ ; System.out.println ( \" BuyService.hello1! i=  \" + i ) ; "];
+ok1 -> bad [ label = "(3) BuyService.hello1\\i > 2 \\System.out.println ( \" BuyService.hello1! count>2 \" ) ; "];
+}

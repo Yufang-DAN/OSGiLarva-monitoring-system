@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 122
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/logging
+END
+Session.java
+K 25
+svn:wc:ra_dav:version-url
+V 135
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/logging/Session.java
+END
+ServiceLoggingEvent.java
+K 25
+svn:wc:ra_dav:version-url
+V 147
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/logging/ServiceLoggingEvent.java
+END
+LogosSecurityException.java
+K 25
+svn:wc:ra_dav:version-url
+V 150
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/logging/LogosSecurityException.java
+END

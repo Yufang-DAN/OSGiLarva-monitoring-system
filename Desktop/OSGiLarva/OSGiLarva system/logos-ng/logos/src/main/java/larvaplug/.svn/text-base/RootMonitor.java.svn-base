@@ -1,0 +1,21 @@
+package larvaplug;
+
+import java.util.LinkedHashMap;
+
+public abstract class RootMonitor implements _callable{
+
+  static protected RootMonitor root;
+  static protected LinkedHashMap<RootMonitor,RootMonitor> instances = new LinkedHashMap<RootMonitor,RootMonitor>();
+
+  public static void activateMonitor(String methodName, Long pid, String serviceInterface, String propertyName) {
+  //_get_cls_inst()._call(methodName,larva.StatesDefsBuyService0.getInstance().getEventNumber(methodName));
+  _get_cls_inst()._call(methodName, pid, serviceInterface, propertyName);
+  _get_cls_inst()._call_all_filtered(methodName, pid, serviceInterface, propertyName);
+  }
+
+  public static RootMonitor _get_cls_inst() {
+    synchronized(instances) {
+      return root;
+    }
+  }
+}

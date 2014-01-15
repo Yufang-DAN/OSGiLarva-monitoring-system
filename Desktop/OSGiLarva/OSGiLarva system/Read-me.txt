@@ -1,0 +1,7 @@
+There are two examples, in order to run these example with OSGiLarva system, all steps are as following:
+
+1. Compile bundle "Logger", bundle "logos-ng" and "adapted-larva" system respectively.
+
+2. In each example, run "larvaForEach.sh" without clock. run "larvaForEachClock.sh" with clock.
+
+3. In order to supervise the monitoring recodes at real time, use command "tail -f runner/out….txt" in the context of each example.

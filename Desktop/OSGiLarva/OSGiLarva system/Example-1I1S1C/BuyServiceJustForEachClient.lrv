@@ -1,0 +1,93 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 
+%% The following property has 3 levels: it monitors that in the shop
+%% system there are no more than 5 requests
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+IMPORTS{
+}
+
+GLOBAL{
+    
+    VARIABLES {
+        int i = 0;
+        }
+
+        EVENTS{
+            BuyService.hello1() = {}
+            BuyService.hello2() = {}
+        }
+        PROPERTY BuyService{
+    
+            STATES {
+        
+                BAD{
+                    bad{}
+                }
+        
+                NORMAL{
+                    ok1{}
+                }
+                
+                STARTING{
+                    start {}
+                }
+            }
+        
+            TRANSITIONS{
+
+                start -> ok1 [BuyService.hello1\i==0\i++; System.out.println("BuyService.hello1!");]
+                ok1 -> ok1 [BuyService.hello2\i<3\i++; System.out.println("BuyService.hello1! i= "+i);]
+                ok1 -> ok1 [BuyService.hello1\i<3\i++; System.out.println("BuyService.hello1! i= "+i);]
+                ok1 -> bad [BuyService.hello1\i>2\System.out.println("BuyService.hello1! count>2");]
+                
+                
+            
+            }
+        }
+      
+    
+    FOREACH(Long pid, String si) {
+        VARIABLES {
+        int c=0;
+        }
+
+        EVENTS{
+            LoadS() = {}
+            BuyService.hello1() = {}
+            BuyService.hello2() = {}
+            UnLoaded() = {}
+            nogetS() = {}
+
+        }
+        PROPERTY client{
+    
+            STATES {
+        
+                BAD{
+                    bad{}
+                }
+        
+                NORMAL{
+                    ok1{}
+                    ok2{}
+                }
+                
+                STARTING{
+                    start {}
+                }
+            }
+        
+            TRANSITIONS{
+                start -> ok1 [LoadS\\System.out.println("Client id is "+ pid + ". The service interface of this loaded service is: " + si);]
+                ok1 -> start [UnLoaded\\System.out.println("One service was unloaded. client id is: "+ pid+ ". The service interface of this loaded service is: " + si);]
+                
+                ok1 -> ok2 [BuyService.hello1\c<6\c++; System.out.println("client id is: "+ pid+ ". The service interface of this loaded service is: " + si);]
+                ok2 -> ok2 [BuyService.hello2\c<6\c++; System.out.println("client id is: "+ pid+ ". The service interface of this loaded service is: " + si);]
+                ok2 -> ok2 [BuyService.hello1\c<6\c++; System.out.println("client id is: "+ pid+ ". The service interface of this loaded service is: " + si);]
+                ok2 -> bad [BuyService.hello1\c>5\System.out.println("client id is: "+ pid+ ". The service interface of this loaded service is: " + si);]
+                }
+        }
+    }
+}

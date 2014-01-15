@@ -1,0 +1,182 @@
+Index: logos/src/main/java/fr/inria/amazones/logosng/interception/LoggingProxy.java
+===================================================================
+--- logos/src/main/java/fr/inria/amazones/logosng/interception/LoggingProxy.java	(révision 2236)
++++ logos/src/main/java/fr/inria/amazones/logosng/interception/LoggingProxy.java	(copie de travail)
+@@ -5,6 +5,8 @@
+ import fr.inria.amazones.logosng.logging.ServiceLoggingEvent;
+ import fr.inria.amazones.logosng.logging.Session;
+ 
++import org.jboss.serial.io.JBossObjectInputStream;
++import org.jboss.serial.io.JBossObjectOutputStream;
+ import org.osgi.framework.Bundle;
+ import org.osgi.framework.BundleContext;
+ import org.osgi.framework.ServiceReference;
+@@ -178,15 +180,14 @@
+ 
+     private Object cloneThroughSerialization(Serializable object) throws IOException, ClassNotFoundException {
+         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+-        ObjectOutputStream out = new ObjectOutputStream(byteArrayOutputStream);
+-        out.writeObject(object);
++        JBossObjectOutputStream out = new JBossObjectOutputStream(byteArrayOutputStream);
++        out.writeUnshared(object);
+         out.close();
+ 
+         final byte[] serializedObject = byteArrayOutputStream.toByteArray();
+         byteArrayOutputStream.close();
+-
+         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(serializedObject);
+-        ObjectInputStream in = new ObjectInputStream(byteArrayInputStream) {
++        JBossObjectInputStream in = new JBossObjectInputStream(byteArrayInputStream) {
+ 
+             @Override
+             public Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+Index: logos/src/main/java/fr/inria/amazones/logosng/storage/AppendOnlyCompressedCryptedEventStore.java
+===================================================================
+--- logos/src/main/java/fr/inria/amazones/logosng/storage/AppendOnlyCompressedCryptedEventStore.java	(révision 2236)
++++ logos/src/main/java/fr/inria/amazones/logosng/storage/AppendOnlyCompressedCryptedEventStore.java	(copie de travail)
+@@ -1,6 +1,7 @@
+ package fr.inria.amazones.logosng.storage;
+ 
+ import fr.inria.amazones.logosng.logging.ServiceLoggingEvent;
++import org.jboss.serial.io.JBossObjectOutputStream;
+ import org.osgi.framework.BundleContext;
+ 
+ import javax.crypto.SecretKey;
+@@ -29,7 +30,7 @@
+     
+     private long byteLimitUntilRotation = 0;
+     private File currentFile;
+-    private ObjectOutputStream oos;
++    private JBossObjectOutputStream oos;
+     private int numFile = 1;
+     private int maxNumberOfFiles;
+     private String prefixFileName;
+@@ -69,7 +70,7 @@
+                     this.debug = true;
+                 }
+             }
+-            this.oos = new ObjectOutputStream(los);
++            this.oos = new JBossObjectOutputStream(los);
+ 
+         } catch (Exception e) {
+             e.printStackTrace();
+@@ -83,7 +84,7 @@
+             debugCpt++;
+         }
+         try {
+-            oos.writeObject(e);
++            oos.writeUnshared(e);
+             oos.flush();
+             if (currentFile.length() >= byteLimitUntilRotation) {
+                 performRotation();
+Index: logos/pom.xml
+===================================================================
+--- logos/pom.xml	(révision 2236)
++++ logos/pom.xml	(copie de travail)
+@@ -19,6 +19,11 @@
+ 
+     <dependencies>
+         <dependency>
++            <groupId>org.jboss.serialization</groupId>
++            <artifactId>jboss-serialization</artifactId>
++            <version>1.1.0.Beta1</version>
++        </dependency>
++        <dependency>
+             <groupId>fr.inria.amazones</groupId>
+             <artifactId>logging</artifactId>
+             <version>0.0.1-SNAPSHOT</version>
+@@ -41,9 +46,10 @@
+                             org.osgi.framework,
+                             org.osgi.framework.hooks.service,
+                             org.osgi.util.tracker,
+-			    fr.inria.amazones.logging,
+-                            javax.crypto, 
+-                            javax.crypto.spec
++                            fr.inria.amazones.logging,
++                            javax.crypto,
++                            javax.crypto.spec,
++                            org.jboss.serial.io
+                         </Import-Package>
+                         <Export-Package>
+                             fr.inria.amazones.logosng.logging
+Index: pom.xml
+===================================================================
+--- pom.xml	(révision 2236)
++++ pom.xml	(copie de travail)
+@@ -11,7 +11,7 @@
+ 
+     <modules>
+         <module>logos</module>
+-		<module>helloservice</module>
++        <module>helloservice</module>
+         <module>simple-logexplorer</module>
+     </modules>
+ 
+@@ -88,12 +88,12 @@
+ 
+     <properties>
+         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+-	<fr.inria.amazones.logosng.logging.level>FINEST</fr.inria.amazones.logosng.logging.level>
++        <fr.inria.amazones.logosng.logging.level>FINEST</fr.inria.amazones.logosng.logging.level>
+ 
+         <logosng.protected>false</logosng.protected>
+         <logosng.protected.consoledebug>true</logosng.protected.consoledebug>
+-	<logosng.crypted>false</logosng.crypted>
+-	<logosng.compress>true</logosng.compress>
++        <logosng.crypted>false</logosng.crypted>
++        <logosng.compress>true</logosng.compress>
+ 
+         <logosng.aop.skip-bundles>org.apache.felix.shell, org.apache.felix.shell.tui</logosng.aop.skip-bundles>
+         <logosng.aop.skip-services>fr.inria.amazones.logosng.logging.EventLoggingService</logosng.aop.skip-services>
+@@ -169,4 +169,37 @@
+         </plugins>
+     </reporting>
+ 
++    <repositories>
++        <repository>
++            <id>jboss-public-repository-group</id>
++            <name>JBoss Public Maven Repository Group</name>
++            <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
++            <layout>default</layout>
++            <releases>
++                <enabled>true</enabled>
++                <updatePolicy>never</updatePolicy>
++            </releases>
++            <snapshots>
++                <enabled>true</enabled>
++                <updatePolicy>never</updatePolicy>
++            </snapshots>
++        </repository>
++    </repositories>
++    <pluginRepositories>
++        <pluginRepository>
++            <id>jboss-public-repository-group</id>
++            <name>JBoss Public Maven Repository Group</name>
++            <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
++            <layout>default</layout>
++            <releases>
++                <enabled>true</enabled>
++                <updatePolicy>never</updatePolicy>
++            </releases>
++            <snapshots>
++                <enabled>true</enabled>
++                <updatePolicy>never</updatePolicy>
++            </snapshots>
++        </pluginRepository>
++    </pluginRepositories>
++
+ </project>
+Index: test-1/pom.xml
+===================================================================
+--- test-1/pom.xml	(révision 2236)
++++ test-1/pom.xml	(copie de travail)
+@@ -41,6 +41,9 @@
+ 		    <!-- DEBUT LOGOS-NG -->
+ 		    <param>mvn:fr.inria.amazones/logging/0.0.1-SNAPSHOT</param>
+             <param>mvn:fr.inria.amazones/logos/1.0-SNAPSHOT</param>
++		    <param>mvn:org.jboss.serialization/jboss-serialization/1.1.0.Beta1</param>
++		    <param>mvn:trove/trove/1.0.2</param>
++		    <param>mvn:log4j/log4j/1.2.15</param>
+ 		    <!-- FIN LOGOS-NG -->
+ 
+ 		  </provision>

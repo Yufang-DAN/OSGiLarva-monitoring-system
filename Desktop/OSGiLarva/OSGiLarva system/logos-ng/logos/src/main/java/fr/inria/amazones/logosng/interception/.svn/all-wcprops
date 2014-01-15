@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 127
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/interception
+END
+SecurityEnforcementProxy.java
+K 25
+svn:wc:ra_dav:version-url
+V 157
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/interception/SecurityEnforcementProxy.java
+END
+ReadWriteValueHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 154
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/interception/ReadWriteValueHandler.java
+END
+NormalValueHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 151
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/interception/NormalValueHandler.java
+END
+ServiceEventAndFindHook.java
+K 25
+svn:wc:ra_dav:version-url
+V 156
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/interception/ServiceEventAndFindHook.java
+END
+LoggingProxy.java
+K 25
+svn:wc:ra_dav:version-url
+V 145
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/interception/LoggingProxy.java
+END
+NoLogValueHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 150
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/interception/NoLogValueHandler.java
+END
+ValueHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 145
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/interception/ValueHandler.java
+END
+ClassAnalyzer.java
+K 25
+svn:wc:ra_dav:version-url
+V 146
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/interception/ClassAnalyzer.java
+END
+PiggyBackClassLoader.java
+K 25
+svn:wc:ra_dav:version-url
+V 153
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/interception/PiggyBackClassLoader.java
+END
+HashValueHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 149
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/interception/HashValueHandler.java
+END
+SessionManager.java
+K 25
+svn:wc:ra_dav:version-url
+V 147
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/logos/src/main/java/fr/inria/amazones/logosng/interception/SessionManager.java
+END
