@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property
+END
+TODO.txt
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/TODO.txt
+END
+hessian-serialization.patch
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/hessian-serialization.patch
+END
+jvm-args
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/jvm-args
+END
+jboss-serialization.patch
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/jboss-serialization.patch
+END
+pom.xml
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/pom.xml
+END
+visualvm-jvm-args
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/visualvm-jvm-args
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/README
+END
+kryo-serialization.patch
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/IARIAJournal2013/!svn/ver/222/Tool/logos-ng-SingMultiItfs-1Property/kryo-serialization.patch
+END

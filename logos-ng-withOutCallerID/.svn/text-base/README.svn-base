@@ -1,0 +1,34 @@
+Logos-NG: hopefully cleaner, more modular and easier to maintain.
+---
+
+Building is as simple as 'mvn clean install'
+
+An OSGi testing environment can be provisioned using PAX Runner:
+
+    mvn clean install pax:run
+
+By default, Apache Felix is used as the underlying OSGi platform, but that can 
+be easily changed. As an example, to use Eclipse Equinox:
+
+    mvn clean install pax:run -Dplatform=equinox
+	
+Some logs on the console windows are eliminated by adjusting the logger level in
+the file 'logging.properties'. Adjust the level to match your need.
+
+'logging.properties' is passed to PAX-runner-provisioned testing environment by the 
+file 'jvm-args'. Change the path of 'logging/properties' in 'jvm-args'
+
+The build runs integration tests using PAX Exam. Tests may fail unless you have
+a first Maven build as:
+    
+    mvn install -DskipTests=true
+
+---------------------------
+
+TESTS
+
+Test-1 : 10k loops, display timing, Service : hello()
+
+Test-2 : 10k loops, display timing, Service : hello(Vector(Vector(Vector....)))
+
+

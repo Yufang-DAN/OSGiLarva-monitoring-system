@@ -1,0 +1,77 @@
+Index: logos/src/main/java/fr/inria/amazones/logosng/storage/AppendOnlyCompressedCryptedEventStore.java
+===================================================================
+--- logos/src/main/java/fr/inria/amazones/logosng/storage/AppendOnlyCompressedCryptedEventStore.java	(révision 2236)
++++ logos/src/main/java/fr/inria/amazones/logosng/storage/AppendOnlyCompressedCryptedEventStore.java	(copie de travail)
+@@ -1,5 +1,6 @@
+ package fr.inria.amazones.logosng.storage;
+ 
++import com.caucho.hessian.io.Hessian2Output;
+ import fr.inria.amazones.logosng.logging.ServiceLoggingEvent;
+ import org.osgi.framework.BundleContext;
+ 
+@@ -29,7 +30,7 @@
+     
+     private long byteLimitUntilRotation = 0;
+     private File currentFile;
+-    private ObjectOutputStream oos;
++    private Hessian2Output oos;
+     private int numFile = 1;
+     private int maxNumberOfFiles;
+     private String prefixFileName;
+@@ -69,7 +70,7 @@
+                     this.debug = true;
+                 }
+             }
+-            this.oos = new ObjectOutputStream(los);
++            this.oos = new Hessian2Output(los);
+ 
+         } catch (Exception e) {
+             e.printStackTrace();
+@@ -84,8 +85,8 @@
+         }
+         try {
+             oos.writeObject(e);
+-            oos.flush();
+             if (currentFile.length() >= byteLimitUntilRotation) {
++                oos.flush();
+                 performRotation();
+             }
+         } catch (Exception ex) {
+Index: logos/pom.xml
+===================================================================
+--- logos/pom.xml	(révision 2236)
++++ logos/pom.xml	(copie de travail)
+@@ -23,6 +23,11 @@
+             <artifactId>logging</artifactId>
+             <version>0.0.1-SNAPSHOT</version>
+         </dependency>
++        <dependency>
++            <groupId>com.caucho</groupId>
++            <artifactId>hessian</artifactId>
++            <version>4.0.7</version>
++        </dependency>
+     </dependencies>
+ 
+     <build>
+@@ -41,7 +46,8 @@
+                             org.osgi.framework,
+                             org.osgi.framework.hooks.service,
+                             org.osgi.util.tracker,
+-			    fr.inria.amazones.logging,
++                            com.caucho.hessian.io,
++			                fr.inria.amazones.logging,
+                             javax.crypto, 
+                             javax.crypto.spec
+                         </Import-Package>
+Index: test-1/pom.xml
+===================================================================
+--- test-1/pom.xml	(révision 2236)
++++ test-1/pom.xml	(copie de travail)
+@@ -41,6 +41,7 @@
+ 		    <!-- DEBUT LOGOS-NG -->
+ 		    <param>mvn:fr.inria.amazones/logging/0.0.1-SNAPSHOT</param>
+             <param>mvn:fr.inria.amazones/logos/1.0-SNAPSHOT</param>
++		    <param>mvn:com.caucho/hessian/4.0.7</param>
+ 		    <!-- FIN LOGOS-NG -->
+ 
+ 		  </provision>

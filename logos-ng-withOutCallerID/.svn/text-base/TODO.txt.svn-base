@@ -1,0 +1,8 @@
+Supprimer le debug dans AppendOnlyCompressedCryptedEventStore pour utiliser
+proprement les logger, sur console par exemple.
+
+Utiliser le composant logger qu'il faut extraire de chez zheng.
+
+Done : Migrer le logger pour avoir un service, à discuter
+
+

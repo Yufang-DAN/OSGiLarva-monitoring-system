@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <groupId>fr.inria.amazones</groupId>
+        <artifactId>logos-ng</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>logos</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>Logos bundle artifact</name>
+
+    <packaging>bundle</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>fr.inria.amazones</groupId>
+            <artifactId>logging</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Private-Package>
+                            fr.inria.amazones.logosng.interception
+                        </Private-Package>
+                        <DynamicImport-Package>
+                            larva
+                        </DynamicImport-Package>
+                        <Import-Package>
+                            org.osgi.framework,
+                            org.osgi.framework.hooks.service,
+                            org.osgi.util.tracker,
+                            fr.inria.amazones.logging,
+                            javax.crypto,
+                            javax.crypto.spec
+                        </Import-Package>
+                        <Export-Package>
+                            fr.inria.amazones.logosng.annotations,
+                            fr.inria.amazones.logosng.storage,
+                            fr.inria.amazones.logosng.logging,
+                            larvaplug
+                        </Export-Package>
+                        <Bundle-Activator>
+                            fr.inria.amazones.logosng.interception.ServiceEventAndFindHook
+                        </Bundle-Activator>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

@@ -1,0 +1,4 @@
+--vmOptions=-Xshare:off
+--bootDelegation=org.netbeans.lib.profiler.*
+--classpath=/Applications/VisualVM.app/Contents/Resources/visualvm/profiler/lib/jfluid-server.jar
+--autoWrap
