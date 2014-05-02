@@ -1,0 +1,59 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 
+%% The following property has 3 levels: it monitors that in the shop
+%% system there are no more than 5 requests
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+IMPORTS{
+
+}
+
+GLOBAL{
+  VARIABLES {
+    int hello1Cnt = 0;
+    int hello2Cnt = 0;
+  }
+
+  EVENTS{
+
+    hello1() = {*.hello1()}
+    hello2() = {*.hello2()}
+
+  }
+
+
+  PROPERTY hellos{
+
+    STATES {
+
+      BAD{
+        toomany {}
+      }
+
+      NORMAL{
+        ok{}
+      }
+
+      STARTING{
+        start {System.out.println("Started!!!");}
+      }
+   }
+
+   TRANSITIONS{
+
+     ok -> toomany [hello1()\hello1Cnt > 5]
+
+     ok -> ok [hello1()\\hello1Cnt++;]
+
+     start -> ok [hello1()\\hello1Cnt++;]
+     
+     ok -> toomany [hello2()\hello2Cnt > 5]
+
+     ok -> ok [hello2()\\hello2Cnt++;]
+
+     start -> ok [hello2()\\hello2Cnt++;]
+
+   }
+  }
+}

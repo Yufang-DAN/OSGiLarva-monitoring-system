@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>fr.citi.amazones</groupId>
+    <artifactId>fm</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>YuFang Projet</name>
+
+    <modules>
+      <module>BuyService</module>
+      <module>BuyClient</module>
+    </modules>
+
+    <packaging>pom</packaging>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <outputDirectory/>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.3.4</version>
+                <extensions>true</extensions>
+            </plugin>
+            <plugin>
+                <groupId>org.ops4j</groupId>
+                <artifactId>maven-pax-plugin</artifactId>
+                <version>1.4</version>
+            </plugin>
+            <plugin>
+                <groupId>org.ops4j.pax.exam</groupId>
+                <artifactId>maven-paxexam-plugin</artifactId>
+                <version>1.2.4</version>
+                <executions>
+                    <execution>
+                        <id>generate-config</id>
+                        <goals>
+                            <goal>generate-depends-file</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <properties>
+      <fr.citi.amazones.fmuse.delay>2000</fr.citi.amazones.fmuse.delay>
+      <fr.citi.amazones.fm.delay>3000</fr.citi.amazones.fm.delay>
+
+      <logosng.protected>false</logosng.protected>
+      <logosng.protected.consoledebug>true</logosng.protected.consoledebug>
+      <logosng.crypted>false</logosng.crypted>
+      <logosng.compress>true</logosng.compress>
+
+      <logosng.logging.logfilename>logosng-recorded-on</logosng.logging.logfilename>
+      <logosng.logging.logfilesize>500000</logosng.logging.logfilesize>
+      <logosng.logging.maxnumberofsavedfiles>40</logosng.logging.maxnumberofsavedfiles>
+      <logosng.aop.skip-services>org.apache.felix.gogo.shell.Converters,org.apache.felix.service.command.CommandProcessor,org.apache.felix.service.threadio.ThreadIO</logosng.aop.skip-services>
+    </properties>
+
+</project>
+
+
